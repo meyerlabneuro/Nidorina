@@ -7,7 +7,7 @@
 #then consider only suppression, generalization, and novel cue freezing for subsets
 
 
-setwd('/Users/hcmeyer/Meyer Lab Boston University/Research/Experiments/Nidorina')
+#setwd('/Users/hcmeyer/Meyer Lab Boston University/Research/Experiments/Nidorina')
 library(readxl); library(writexl);library(ggplot2); library(forcats); library(ggsci); library(patchwork); library(ez); library(rstatix); library(multcomp); library(tidyverse); library(cowplot); library(car)
 
 fig_stats <- function(x) 
