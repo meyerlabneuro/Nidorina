@@ -1,8 +1,7 @@
-
 ###figure out how to wade through novelty results -- start with graph of raw freezing from ALL novelty mice
 #then consider only suppression, generalization, and novel cue freezing for subsets
 
-setwd('/Users/hcmeyer/Meyer Lab Boston University/Research/Experiments/Nidorina')
+#setwd('/Users/hcmeyer/Meyer Lab Boston University/Research/Experiments/Nidorina')
 library(readxl); library(writexl);library(ggplot2); library(forcats); library(ggsci); library(patchwork); library(ez); library(rstatix); library(multcomp); library(tidyverse); library(cowplot); library(car)
 
 fig_stats <- function(x) 
@@ -100,7 +99,7 @@ Adult_age <- Master_DC1_Adult %>% pnd_stats
 #graph the data
 Acquisition <- read_xlsx(sheet = 1, 'Nido_Acquisition.xlsx') #This will include ALL of the mice from the project
 
-Acquisition_sub <- Acquisition %>% filter(Age == "Adult", !StimType == "Baseline", !StimType == "Discrim")
+Acquisition_sub <- Acquisition %>% filter(Age == "Adolescent", !StimType == "Baseline", !StimType == "Discrim")
 Acquisition_sub_stats <- Acquisition_sub %>% 
   group_by(StimType, Day, Sex) %>% 
   fig_stats %>% 
@@ -271,7 +270,7 @@ Summation_Fos <- read_xlsx(sheet = 1, 'Nido_Summation_Fos.xlsx')
 
 #graph the data
 Summation <- Summation_Fos %>% filter(!StimType == "Baseline", !StimType == "Discrim", !StimType == "Inhib", !StimType == "Suppression")
-Summation_Age <- Summation %>% filter(Age == "Adolescent") %>%
+Summation_Age <- Summation %>% filter(Age == "Adult") %>%
   mutate(StimType = fct_relevel(StimType, "Fear", "Compound", "Safety"))
 Summation_sub_stats <- Summation_Age %>%
   mutate(StimType = fct_relevel(StimType, "Fear", "Compound", "Safety")) %>%
@@ -382,7 +381,7 @@ Novelty <- Summation_Novel %>%
          !StimType == "Suppression", !StimType == "Generalization") %>%
   select(MouseID, Sex, Age, StimType, Freezing)
 
-Novelty_Age <- Novelty %>% filter(Age == "Adolescent") %>%
+Novelty_Age <- Novelty %>% filter(Age == "Adult") %>%
   mutate(StimType = fct_relevel(StimType, "Fear", "Compound", "Safety", "Novel Compound", "Novel"))
 Novelty_sub_stats <- Novelty_Age %>%
   mutate(StimType = fct_relevel(StimType, "Fear", "Compound", "Safety", "Novel Compound", "Novel")) %>%
