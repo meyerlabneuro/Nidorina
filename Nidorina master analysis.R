@@ -1,13 +1,8 @@
 
-###triple check all stats tests - 
-#make sure levene's tests are accurately coded (significant results = homogeneity of variance FALSE)
-#check that paired or not paired t-tests are accurate
-#update stats in manuscript as necessary
-#figure out how to wade through novelty results -- start with graph of raw freezing from ALL novelty mice
+###figure out how to wade through novelty results -- start with graph of raw freezing from ALL novelty mice
 #then consider only suppression, generalization, and novel cue freezing for subsets
 
-
-#setwd('/Users/hcmeyer/Meyer Lab Boston University/Research/Experiments/Nidorina')
+setwd('/Users/hcmeyer/Meyer Lab Boston University/Research/Experiments/Nidorina')
 library(readxl); library(writexl);library(ggplot2); library(forcats); library(ggsci); library(patchwork); library(ez); library(rstatix); library(multcomp); library(tidyverse); library(cowplot); library(car)
 
 fig_stats <- function(x) 
@@ -81,8 +76,8 @@ Summation_Novel <- Summation_Novel %>%
   select(MouseID, Sex, Age, FearFreq, NovelFreq, Baseline:Novel) %>%
   mutate(Discrim = Fear - Safety) %>%
   mutate(Inhib = Fear - Compound) %>%
-  mutate(Suppression = Compound/Fear) %>%
-  mutate(Generalization = Summation_Novel$"Novel Compound"/Fear) %>%
+  mutate(Suppression = Compound/(Compound+Fear)) %>%
+  mutate(Generalization = Summation_Novel$"Novel Compound"/(Summation_Novel$"Novel Compound"+Fear)) %>%
   pivot_longer(cols = Baseline:Generalization, names_to = "StimType", values_to = "Freezing")
 write_xlsx(Summation_Novel, 'Nido_Summation_Novel.xlsx')
 
@@ -133,15 +128,15 @@ Age_ph <- Acquisition_stats_sub %>% group_by(Age) %>%   fig_stats
 #interaction between age and day (post hoc)
 levene_test <- leveneTest(Freezing ~ Age*Day, data = Acquisition_stats_sub) #Levene's test for homogeneity of variances
 levene_test
-AgeBYDay_ph <- Acquisition_stats_sub %>% group_by(Day) %>% t_test(Freezing ~ Age, var.equal = TRUE, paired = FALSE)
+AgeBYDay_ph <- Acquisition_stats_sub %>% group_by(Day) %>% t_test(Freezing ~ Age, var.equal = FALSE, paired = FALSE)
 AgeBYDay_ph
 AgeBYDay_ph_bonf <- p.adjust(AgeBYDay_ph$p, method = "bonferroni")
 AgeBYDay_ph_bonf
 
-#interaction between age and day (post hoc)
+#interaction between stimtype and day (post hoc)
 levene_test <- leveneTest(Freezing ~ StimType*Day, data = Acquisition_stats_sub) #Levene's test for homogeneity of variances
 levene_test
-StimTypeBYDay_ph <- Acquisition_stats_sub %>% group_by(Day) %>% t_test(Freezing ~ StimType, var.equal = TRUE, paired = TRUE)
+StimTypeBYDay_ph <- Acquisition_stats_sub %>% group_by(Day) %>% t_test(Freezing ~ StimType, var.equal = FALSE, paired = TRUE)
 StimTypeBYDay_ph
 StimTypeBYDay_bonf <- p.adjust(StimTypeBYDay_ph$p, method = "bonferroni")
 StimTypeBYDay_bonf
@@ -152,7 +147,7 @@ Sex_ph <- Acquisition_stats_sub %>% group_by(Sex) %>%   fig_stats
 #interaction between sex and day (post hoc)
 levene_test <- leveneTest(Freezing ~ Sex*Day, data = Acquisition_stats_sub) #Levene's test for homogeneity of variances
 levene_test
-SexBYDay_ph <- Acquisition_stats_sub %>% group_by(Day) %>% t_test(Freezing ~ Sex, var.equal = TRUE, paired = FALSE)
+SexBYDay_ph <- Acquisition_stats_sub %>% group_by(Day) %>% t_test(Freezing ~ Sex, var.equal = FALSE, paired = FALSE)
 SexBYDay_ph
 SexBYDay_ph_bonf <- p.adjust(SexBYDay_ph$p, method = "bonferroni")
 SexBYDay_ph_bonf
@@ -160,15 +155,15 @@ SexBYDay_ph_bonf
 #interaction between sex and StimType (post hoc)
 levene_test <- leveneTest(Freezing ~ Sex*StimType, data = Acquisition_stats_sub) #Levene's test for homogeneity of variances
 levene_test
-SexBYStimType_ph <- Acquisition_stats_sub %>% group_by(StimType) %>% t_test(Freezing ~ Sex, var.equal = TRUE, paired = FALSE)
+SexBYStimType_ph <- Acquisition_stats_sub %>% group_by(StimType) %>% t_test(Freezing ~ Sex, var.equal = FALSE, paired = FALSE)
 SexBYStimType_ph
 SexBYStimType_ph_bonf <- p.adjust(SexBYStimType_ph$p, method = "bonferroni")
 SexBYStimType_ph_bonf
 
-#interaction between sex and StimType (post hoc)
+#interaction between sex and StimType By Day (post hoc)
 levene_test <- leveneTest(Freezing ~ Sex*StimType*Day, data = Acquisition_stats_sub) #Levene's test for homogeneity of variances
 levene_test
-SexBYStimType_ph <- Acquisition_stats_sub %>% group_by(Day, StimType) %>% t_test(Freezing ~ Sex, var.equal = TRUE, paired = FALSE)
+SexBYStimType_ph <- Acquisition_stats_sub %>% group_by(Day, StimType) %>% t_test(Freezing ~ Sex, var.equal = FALSE, paired = FALSE)
 SexBYStimType_ph
 SexBYStimType_ph_bonf <- p.adjust(SexBYStimType_ph$p, method = "bonferroni")
 SexBYStimType_ph_bonf
@@ -203,7 +198,7 @@ Sex_ph <- Acquisition_Discrim %>% group_by(Sex) %>%   fig_stats
 #main effect of day (post hoc)
 levene_test <- leveneTest(Freezing ~ Day, data = Acquisition_Discrim) #Levene's test for homogeneity of variances
 levene_test
-Day_ph <- Acquisition_Discrim %>% t_test(Freezing ~ Day, var.equal = FALSE, paired = FALSE)
+Day_ph <- Acquisition_Discrim %>% t_test(Freezing ~ Day, var.equal = TRUE, paired = FALSE)
 Day_ph
 Day_ph_bonf <- p.adjust(Day_ph$p, method = "bonferroni")
 Day_ph_bonf
@@ -211,7 +206,7 @@ Day_ph_bonf
 #marginal interaction between sex and day (post hoc)
 levene_test <- leveneTest(Freezing ~ Sex*Day, data = Acquisition_Discrim) #Levene's test for homogeneity of variances
 levene_test
-SexBYDay_ph <- Acquisition_Discrim %>% group_by(Day) %>% t_test(Freezing ~ Sex, var.equal = FALSE, paired = FALSE)
+SexBYDay_ph <- Acquisition_Discrim %>% group_by(Day) %>% t_test(Freezing ~ Sex, var.equal = TRUE, paired = FALSE)
 SexBYDay_ph
 SexBYDay_ph_bonf <- p.adjust(SexBYDay_ph$p, method = "bonferroni")
 SexBYDay_ph_bonf
@@ -250,7 +245,7 @@ Sex_ph <- Acquisition_Baseline %>% group_by(Sex) %>% fig_stats
 #main effect of day (post hoc)
 levene_test <- leveneTest(Freezing ~ Day, data = Acquisition_Baseline) #Levene's test for homogeneity of variances
 levene_test
-Day_ph <- Acquisition_Baseline %>% t_test(Freezing ~ Day, var.equal = TRUE, paired = FALSE)
+Day_ph <- Acquisition_Baseline %>% t_test(Freezing ~ Day, var.equal = FALSE, paired = FALSE)
 Day_ph
 Day_ph_bonf <- p.adjust(Day_ph$p, method = "bonferroni")
 Day_ph_bonf
@@ -258,7 +253,7 @@ Day_ph_bonf
 #interaction between age and day (post hoc)
 levene_test <- leveneTest(Freezing ~ Age*Day, data = Acquisition_Baseline) #Levene's test for homogeneity of variances
 levene_test
-AgeBYDay_ph <- Acquisition_Baseline %>% group_by(Day) %>% t_test(Freezing ~ Age, var.equal = TRUE, paired = FALSE)
+AgeBYDay_ph <- Acquisition_Baseline %>% group_by(Day) %>% t_test(Freezing ~ Age, var.equal = FALSE, paired = FALSE)
 AgeBYDay_ph
 AgeBYDay_ph_bonf <- p.adjust(AgeBYDay_ph$p, method = "bonferroni")
 AgeBYDay_ph_bonf
@@ -266,7 +261,7 @@ AgeBYDay_ph_bonf
 #marginal interaction between sex and day (post hoc)
 levene_test <- leveneTest(Freezing ~ Sex*Day, data = Acquisition_Baseline) #Levene's test for homogeneity of variances
 levene_test
-SexBYDay_ph <- Acquisition_Baseline %>% group_by(Day) %>% t_test(Freezing ~ Sex, var.equal = TRUE, paired = FALSE)
+SexBYDay_ph <- Acquisition_Baseline %>% group_by(Day) %>% t_test(Freezing ~ Sex, var.equal = FALSE, paired = FALSE)
 SexBYDay_ph
 SexBYDay_ph_bonf <- p.adjust(SexBYDay_ph$p, method = "bonferroni")
 SexBYDay_ph_bonf
@@ -403,7 +398,7 @@ p_Novelty <- ggplot(Novelty_sub_stats, aes(x = Sex, y = mean, fill = StimType)) 
   scale_x_discrete(name = NULL) +
   scale_y_continuous("Average cued freezing (%)", limits = c(0, 100), breaks = seq(0, 100, 10), expand = c(0, 1)) +
   scale_fill_manual(name = NULL, values = c("red3", "purple3", "steelblue1", "turquoise", "orange")) +
-  theme(legend.position = c(1.1,1.05))
+  theme(legend.position = "right")
 p_Novelty
 
 #analyze the data
@@ -413,85 +408,110 @@ Novelty_model
 #main effect of stim type (post hoc)
 levene_test <- leveneTest(Freezing ~ StimType, data = Novelty) #Levene's test for homogeneity of variances
 levene_test
-Stim_ph <- Novelty %>% t_test(Freezing ~ StimType, var.equal = TRUE, paired = FALSE)
+Stim_ph <- Novelty %>% t_test(Freezing ~ StimType, var.equal = FALSE, paired = TRUE)
 Stim_ph
 Stim_ph_bonf <- p.adjust(Stim_ph$p, method = "bonferroni")
 Stim_ph_bonf
 
-##### SUMMATION TEST (Novel subset - Mid-Fear High-Novel mice) #####
+#interaction between Age and StimType
+AdolNov <- Novelty %>% filter(Age == "Adolescent")
+levene_test <- leveneTest(Freezing ~ StimType, data = AdolNov) #Levene's test for homogeneity of variances
+levene_test
+Stim_ph <- AdolNov %>% t_test(Freezing ~ StimType, var.equal = FALSE, paired = TRUE)
+Stim_ph
+Stim_ph_bonf <- p.adjust(Stim_ph$p, method = "bonferroni")
+Stim_ph_bonf
+
+AdultNov <- Novelty %>% filter(Age == "Adult")
+levene_test <- leveneTest(Freezing ~ StimType, data = AdultNov) #Levene's test for homogeneity of variances
+levene_test
+Stim_ph <- AdultNov %>% t_test(Freezing ~ StimType, var.equal = TRUE, paired = TRUE)
+Stim_ph
+Stim_ph_bonf <- p.adjust(Stim_ph$p, method = "bonferroni")
+Stim_ph_bonf
+
+##### SUMMATION TEST (Novel subset - subsetted further) #####
 Summation_Novel <- read_xlsx(sheet = 1, 'Nido_Summation_Novel.xlsx')
 
-#graph the data
-Novelty_midF_highN <- Summation_Novel %>% filter(!StimType == "Baseline", !StimType == "Discrim", !StimType == "Inhib", 
-                                      !StimType == "Suppression", !StimType == "Generalization",
-                                      !FearFreq == "3kHz", !NovelFreq == "7.5kHz", !NovelFreq == "8kHz")
-Novelty_midF_highN_Age <- Novelty_midF_highN %>% filter(Age == "Adolescent") %>%
-  mutate(StimType = fct_relevel(StimType, "Fear", "Compound", "Safety", "Novel Compound", "Novel"))
-Novelty_midF_highN_sub_stats <- Novelty_midF_highN_Age %>%
-  mutate(StimType = fct_relevel(StimType, "Fear", "Compound", "Safety", "Novel Compound", "Novel")) %>%
-  group_by(Sex, StimType) %>% fig_stats
+#curate a novelty subset spreadsheet
+Novelty_midF_highN <- Summation_Novel %>% 
+  filter(!FearFreq == "3kHz", !NovelFreq == "7.5kHz", !NovelFreq == "8kHz") %>%
+  mutate(Group = "midF_highN")
+Novelty_lowF_highN <- Summation_Novel %>% 
+  filter(!FearFreq == "12kHz", !FearFreq == "13kHz", !NovelFreq == "7.5kHz", !NovelFreq == "8kHz") %>%
+  mutate(Group = "lowF_highN")
+Novelty_midN <- Summation_Novel %>% 
+  filter(!NovelFreq == "20kHz", !NovelFreq == "21kHz") %>%
+  mutate(Group = "midN")
+Novelty_subsets <- bind_rows(Novelty_midF_highN, Novelty_lowF_highN, Novelty_midN) %>%
+  select(MouseID:Age, StimType, Group, Freezing)
 
-p_Novelty_midF_highN <- ggplot(Novelty_midF_highN_sub_stats, aes(x = Sex, y = mean, fill = StimType)) +
+#Suppression
+Suppression_Age <- Novelty_subsets %>% filter(Age == "Adult", StimType == "Suppression")
+Suppression_Age_stats <- Suppression_Age %>%
+  group_by(Group, Sex) %>%
+  fig_stats
+  
+p_Suppression <- ggplot(Suppression_Age_stats, aes(x = Sex, y = mean, fill = Group)) +
   geom_col(position = position_dodge2(width = 0.7)) +
-  geom_point(data = Novelty_midF_highN_Age, inherit.aes = FALSE,
-             aes(x = Sex, y = Freezing, fill = StimType, group = StimType), show.legend = FALSE,
+  geom_point(data = Suppression_Age, inherit.aes = FALSE,
+             aes(x = Sex, y = Freezing, fill = Group, group = Group), show.legend = FALSE,
              position = position_jitterdodge(jitter.width = 0.15, dodge.width = 0.9), alpha = 0.5, shape = 21, stroke = 1, size = 3) +
   geom_errorbar(aes(ymin = mean - sem, ymax = mean + sem),
                 width = 0.1, size = 0.7, position = position_dodge(width = 0.9)) +
   scale_x_discrete(name = NULL) +
-  scale_y_continuous("Average cued freezing (%)", limits = c(0, 100), breaks = seq(0, 100, 10), expand = c(0, 1)) +
-  scale_fill_manual(name = NULL, values = c("red3", "purple3", "steelblue1", "turquoise", "orange")) +
+  scale_y_continuous("Suppression ratio", limits = c(0, 1), breaks = seq(0, 1, 0.2), expand = c(0, 0)) +
+  #scale_fill_manual(name = NULL, values = c("red3", "purple3", "steelblue1", "turquoise", "orange")) +
   theme(legend.position = c(1.1,1.05))
-p_Novelty_midF_highN
+p_Suppression
 
-##### SUMMATION TEST (Novel subset - Low-Fear High-Novel mice) #####
-Summation_Novel <- read_xlsx(sheet = 1, 'Nido_Summation_Novel.xlsx')
+#analyze the data
+Suppression_model <- anova_test(data = Suppression_Age, dv = Freezing, wid = MouseID, between = c(Group, Sex), effect.size = "pes")
+Suppression_model
 
-#graph the data
-Novelty_lowF_highN <- Summation_Novel %>% filter(!StimType == "Baseline", !StimType == "Discrim", !StimType == "Inhib", 
-                                                 !StimType == "Suppression", !StimType == "Generalization",
-                                                 !FearFreq == "12kHz", !FearFreq == "13kHz", !NovelFreq == "7.5kHz", !NovelFreq == "8kHz")
-Novelty_lowF_highN_Age <- Novelty_lowF_highN %>% filter(Age == "Adult") %>%
-  mutate(StimType = fct_relevel(StimType, "Fear", "Compound", "Safety", "Novel Compound", "Novel"))
-Novelty_lowF_highN_sub_stats <- Novelty_lowF_highN_Age %>%
-  mutate(StimType = fct_relevel(StimType, "Fear", "Compound", "Safety", "Novel Compound", "Novel")) %>%
-  group_by(Sex, StimType) %>% fig_stats
+#Generalization
+Generalization_Age <- Novelty_subsets %>% filter(Age == "Adolescent", StimType == "Generalization")
+Generalization_Age_stats <- Generalization_Age %>%
+  group_by(Group, Sex) %>%
+  fig_stats
 
-p_Novelty_lowF_highN <- ggplot(Novelty_lowF_highN_sub_stats, aes(x = Sex, y = mean, fill = StimType)) +
+p_Generalization <- ggplot(Generalization_Age_stats, aes(x = Sex, y = mean, fill = Group)) +
   geom_col(position = position_dodge2(width = 0.7)) +
-  geom_point(data = Novelty_lowF_highN_Age, inherit.aes = FALSE,
-             aes(x = Sex, y = Freezing, fill = StimType, group = StimType), show.legend = FALSE,
+  geom_point(data = Generalization_Age, inherit.aes = FALSE,
+             aes(x = Sex, y = Freezing, fill = Group, group = Group), show.legend = FALSE,
              position = position_jitterdodge(jitter.width = 0.15, dodge.width = 0.9), alpha = 0.5, shape = 21, stroke = 1, size = 3) +
   geom_errorbar(aes(ymin = mean - sem, ymax = mean + sem),
                 width = 0.1, size = 0.7, position = position_dodge(width = 0.9)) +
   scale_x_discrete(name = NULL) +
-  scale_y_continuous("Average cued freezing (%)", limits = c(0, 100), breaks = seq(0, 100, 10), expand = c(0, 1)) +
-  scale_fill_manual(name = NULL, values = c("red3", "purple3", "steelblue1", "turquoise", "orange")) +
+  scale_y_continuous("Generalization ratio", limits = c(0, 1), breaks = seq(0, 1, 0.2), expand = c(0, 0)) +
+  #scale_fill_manual(name = NULL, values = c("red3", "purple3", "steelblue1", "turquoise", "orange")) +
   theme(legend.position = c(1.1,1.05))
-p_Novelty_lowF_highN
+p_Generalization
 
-##### SUMMATION TEST (Novel subset - Mid-Novel mice) #####
-Summation_Novel <- read_xlsx(sheet = 1, 'Nido_Summation_Novel.xlsx')
+#analyze the data
+Generalization_model <- anova_test(data = Generalization_Age, dv = Freezing, wid = MouseID, between = c(Group, Sex), effect.size = "pes")
+Generalization_model
 
-#graph the data
-Novelty_midN <- Summation_Novel %>% filter(!StimType == "Baseline", !StimType == "Discrim", !StimType == "Inhib", 
-                                                 !StimType == "Suppression", !StimType == "Generalization",
-                                                 !NovelFreq == "20kHz", !NovelFreq == "21kHz")
-Novelty_midN_Age <- Novelty_midN %>% filter(Age == "Adolescent") %>%
-  mutate(StimType = fct_relevel(StimType, "Fear", "Compound", "Safety", "Novel Compound", "Novel"))
-Novelty_midN_sub_stats <- Novelty_midN_Age %>%
-  mutate(StimType = fct_relevel(StimType, "Fear", "Compound", "Safety", "Novel Compound", "Novel")) %>%
-  group_by(Sex, StimType) %>% fig_stats
+#Novelty
+NovelCue_Age <- Novelty_subsets %>% filter(Age == "Adult", StimType == "Novel")
+NovelCue_Age_stats <- NovelCue_Age %>%
+  group_by(Group, Sex) %>%
+  fig_stats
 
-p_Novelty_midN <- ggplot(Novelty_midN_sub_stats, aes(x = Sex, y = mean, fill = StimType)) +
+p_NovelCue <- ggplot(NovelCue_Age_stats, aes(x = Sex, y = mean, fill = Group)) +
   geom_col(position = position_dodge2(width = 0.7)) +
-  geom_point(data = Novelty_midN_Age, inherit.aes = FALSE,
-             aes(x = Sex, y = Freezing, fill = StimType, group = StimType), show.legend = FALSE,
+  geom_point(data = NovelCue_Age, inherit.aes = FALSE,
+             aes(x = Sex, y = Freezing, fill = Group, group = Group), show.legend = FALSE,
              position = position_jitterdodge(jitter.width = 0.15, dodge.width = 0.9), alpha = 0.5, shape = 21, stroke = 1, size = 3) +
   geom_errorbar(aes(ymin = mean - sem, ymax = mean + sem),
                 width = 0.1, size = 0.7, position = position_dodge(width = 0.9)) +
   scale_x_discrete(name = NULL) +
-  scale_y_continuous("Average cued freezing (%)", limits = c(0, 100), breaks = seq(0, 100, 10), expand = c(0, 1)) +
-  scale_fill_manual(name = NULL, values = c("red3", "purple3", "steelblue1", "turquoise", "orange")) +
+  scale_y_continuous("Novelty Freezing (%)", limits = c(0, 100), breaks = seq(0, 100, 10), expand = c(0, 0)) +
+  #scale_fill_manual(name = NULL, values = c("red3", "purple3", "steelblue1", "turquoise", "orange")) +
   theme(legend.position = c(1.1,1.05))
-p_Novelty_midN
+p_NovelCue
+
+#analyze the data
+NovelCue_model <- anova_test(data = NovelCue_Age, dv = Freezing, wid = MouseID, between = c(Group, Sex), effect.size = "pes")
+NovelCue_model
+
