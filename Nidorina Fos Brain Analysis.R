@@ -1,4 +1,4 @@
-setwd('/Users/hcmeyer/Meyer Lab Boston University/Research/Experiments/Nidorina')
+#setwd('/Users/hcmeyer/Meyer Lab Boston University/Research/Experiments/Nidorina')
 library(readxl); library(forcats); library(ggsci); library(patchwork); library(ez); library(rstatix); library(multcomp); library(tidyverse); library(cowplot); library(car)
 
 brain_stats <- function(x) 
@@ -150,15 +150,15 @@ AMY_ph
 AMY_ph <- Amygdala %>% t_test(Ratio ~ Sex, var.equal = TRUE, paired = FALSE)
 AMY_ph
 
-AMY <- Amygdala %>% filter(Age == "Adult")
-AMY_stats <- AMY %>% mutate(Age = fct_relevel(Age, "Adult", "Adolescent")) %>% group_by(Sex, Age) %>% brain_stats
+AMY_stats <- Amygdala %>% mutate(Age = fct_relevel(Age, "Adult", "Adolescent")) %>% group_by(Sex, Age) %>% brain_stats
 
+#Graph 
 p_AMY <- ggplot(AMY_stats, aes(x = Age, y = mean, fill = Sex)) +
   geom_col(position = position_dodge2(width = 0.7)) +
-  geom_point(data = AMY, inherit.aes = FALSE,
+  geom_point(data = Amygdala, inherit.aes = FALSE,
              aes(x = Age, y = Ratio, fill = Sex, group = Sex), show.legend = FALSE,
-             position = position_jitterdodge(jitter.width = 0.15, dodge.width = 0.9), alpha = 0.5, shape = 21, stroke = 0.7, size = 2) +
-  geom_errorbar(aes(ymin = mean - sem, ymax = mean + sem), width = 0.1, size = 0.7, position = position_dodge(width = 0.9)) +
+             position = positiopn_jitterdodge(jitter.width = 0.15, dodge.width = 0.9), alpha = 0.5, shape = 21, stroke = 0.7, size = 2) +
+  geom_errorbar(aes(ymin = mean - sem, ymax = mean + sem), width = 0.1, linewidth = 0.7, position = position_dodge(width = 0.9)) +
   scale_x_discrete(name = NULL) +
   scale_y_continuous("Fos/DAPI (%)", limits = c(0, 50), breaks = seq(0, 50, 10), expand = c(0, 0)) +
   scale_fill_manual(name = NULL, values = c("gray25", "gray60")) +
@@ -245,7 +245,7 @@ RSC_corr <- cor(RSC_corr_build) # get correlations
 corrplot(RSC_corr, method = "color", tl.col = 'black', addCoef.col ='black', number.cex = 0.8, col = COL1('YlGn')) #plot matrix
 cor.mtest(RSC_corr) #returns p-values in a table
 
-#VentralHipp
+#VH
 VentralHipp <- read_xlsx(sheet = 5, 'Fos ratios_Manuscript.xlsx') %>% filter(!is.na(Ratio))
 VentralHipp <- VentralHipp %>% rename(Value = Ratio)
 VH_performance <- bind_rows(VentralHipp, Summation)
@@ -253,18 +253,33 @@ VH_performance_wide <- VH_performance %>% pivot_wider(names_from = Variable, val
   filter(!is.na(Ratio))
 
 VH_corr_build <- data.frame(Ratio=VH_performance_wide$Ratio,
-                Fear=VH_performance_wide$Fear,
-                Compound=VH_performance_wide$Compound,
-                Safety=VH_performance_wide$Safety,
-                Discrim=VH_performance_wide$Discrim,
-                Suppression=VH_performance_wide$Suppression)
+                            Fear=VH_performance_wide$Fear,
+                            Compound=VH_performance_wide$Compound,
+                            Safety=VH_performance_wide$Safety,
+                            Discrim=VH_performance_wide$Discrim,
+                            Suppression=VH_performance_wide$Suppression)
 VH_corr <- cor(VH_corr_build) # get correlations
 
 corrplot(VH_corr, method = "color", tl.col = 'black', addCoef.col ='black', number.cex = 0.8, col = COL1('YlGn')) #plot matrix
 cor.mtest(VH_corr) #returns p-values in a table
 
+#BLA
+Amygdala <- read_xlsx(sheet = 6, 'Fos ratios_Manuscript.xlsx') %>% filter(!is.na(Ratio))
+Amygdala <- Amygdala %>% rename(Value = Ratio)
+BLA_performance <- bind_rows(Amygdala, Summation)
+BLA_performance_wide <- BLA_performance %>% pivot_wider(names_from = Variable, values_from = Value) %>%
+  filter(!is.na(Ratio))
 
+BLA_corr_build <- data.frame(Ratio=BLA_performance_wide$Ratio,
+                Fear=BLA_performance_wide$Fear,
+                Compound=BLA_performance_wide$Compound,
+                Safety=BLA_performance_wide$Safety,
+                Discrim=BLA_performance_wide$Discrim,
+                Suppression=BLA_performance_wide$Suppression)
+BLA_corr <- cor(BLA_corr_build) # get correlations
 
+corrplot(BLA_corr, method = "color", tl.col = 'black', addCoef.col ='black', number.cex = 0.8, col = COL1('YlGn')) #plot matrix
+cor.mtest(BLA_corr) #returns p-values in a table
 
 #All regions
 Prelimbic <- Prelimbic %>% mutate(Region = "PL")
@@ -272,7 +287,8 @@ Infralimbic <- Infralimbic %>% mutate(Region = "IL")
 Orbitofrontal <- Orbitofrontal %>% mutate(Region = "OFC")
 Retrosplenial <- Retrosplenial %>% mutate(Region = "RSC")
 VentralHipp <- VentralHipp %>% mutate(Region = "VH")
-AllBrain <- bind_rows(Prelimbic, Infralimbic, Orbitofrontal, Retrosplenial, VentralHipp)
+Amygdala <- Amygdala %>% mutate(Region = "BLA")
+AllBrain <- bind_rows(Prelimbic, Infralimbic, Orbitofrontal, Retrosplenial, VentralHipp, Amygdala)
 AllBrain <- AllBrain %>% rename(Value = Ratio)
 #fix from here
 AllBrain_performance <- bind_rows(AllBrain, Summation)
