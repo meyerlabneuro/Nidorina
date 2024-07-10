@@ -2,7 +2,7 @@
 ###figure out how to wade through novelty results -- start with graph of raw freezing from ALL novelty mice
 #then consider only suppression, generalization, and novel cue freezing for subsets
 
-#setwd('/Users/hcmeyer/Meyer Lab Boston University/Research/Experiments/Nidorina')
+setwd('/Users/hcmeyer/Meyer Lab Boston University/Research/Experiments/Nidorina')
 library(readxl); library(writexl);library(ggplot2); library(forcats); library(ggsci); library(patchwork); library(ez); library(rstatix); library(multcomp); library(tidyverse); library(cowplot); library(car)
 
 fig_stats <- function(x) 
@@ -67,7 +67,7 @@ Summation_Fos <- Summation %>%
   select(MouseID, Sex, Age, Baseline:Safety) %>%
   mutate(Discrim = Fear - Safety) %>%
   mutate(Inhib = Fear - Compound) %>%
-  mutate(Suppression = Compound/Fear) %>%
+  mutate(Suppression = Compound/(Compound+Fear)) %>%
   pivot_longer(cols = Baseline:Suppression, names_to = "StimType", values_to = "Freezing")
 write_xlsx(Summation_Fos, 'Nido_Summation_Fos.xlsx')
 
@@ -113,9 +113,11 @@ p_Acq <- ggplot(Acquisition_sub_stats, aes(x = Day, y = mean, group = Group)) +
   scale_shape_manual(values=c(19, 1)) +
   scale_color_manual(values=c("red3", "steelblue1")) +
   scale_x_discrete(name = NULL, labels = (c("Day 1", "Day 2", "Day 3","Day 4"))) +
-  scale_y_continuous("Average cued freezing (%)", limits = c(0, 100), breaks = seq(0, 100, 10), expand = c(0, 0))
+  scale_y_continuous("Average cued freezing (%)", limits = c(0, 100), breaks = seq(0, 100, 10), expand = c(0, 0)) +
+  ggtitle("Adult") +
+  theme(legend.position = "none")
 p_Acq
-#750 x 500 (size of graph - including legend)
+#550 x 440 (size of graph - excluding legend)
 
 #analyze the data (ANOVA)
 Acquisition_stats_sub <- Acquisition %>% filter(!StimType == "Baseline", !StimType == "Discrim")
@@ -171,7 +173,7 @@ SexBYStimType_ph_bonf
 #### ACQUISITION DISCRIMINATION MAGNITUDE ####
 #graph the data
 Acquisition_Discrim <- Acquisition %>% filter(StimType == "Discrim")
-Acquisition_Discrim_Age <- Acquisition_Discrim %>% filter(Age == "Adult")
+Acquisition_Discrim_Age <- Acquisition_Discrim %>% filter(Age == "Adolescent")
 Acquisition_Discrim_Age_stats <- Acquisition_Discrim_Age %>% 
   group_by(Day, Sex) %>% fig_stats
 
@@ -179,14 +181,16 @@ p_Acquisition_Discrim <- ggplot(Acquisition_Discrim_Age_stats, aes(x = Day, y = 
   geom_col(position = position_dodge2(width = 0.7)) +
   geom_point(data = Acquisition_Discrim_Age, inherit.aes = FALSE,
              aes(x = Day, y = Freezing, fill = Sex, group = Sex), show.legend = FALSE,
-             position = position_jitterdodge(jitter.width = 0.15, dodge.width = 0.9), alpha = 0.5, shape = 21, stroke = 1, size = 3) +
+             position = position_jitterdodge(jitter.width = 0.15, dodge.width = 0.9), alpha = 0.5, shape = 21, stroke = 0.7, size = 2) +
   geom_errorbar(aes(ymin = mean - sem, ymax = mean + sem),
                 width = 0.1, size = 0.7, position = position_dodge(width = 0.9)) +
   scale_x_discrete(name = NULL, labels = c("Day 1", "Day 2", "Day 3", "Day 4")) +
-  scale_y_continuous("Discrimination Index (%)", limits = c(-50, 70), breaks = seq(-50, 70, 10), expand = c(0, 0)) +
+  scale_y_continuous("Discrimination Index (%)", limits = c(-50, 70.5), breaks = seq(-50, 70, 10), expand = c(0, 0)) +
   scale_fill_manual(name = NULL, values = c("gray25", "gray60")) +
-  theme(legend.position = c(0.3,1.05))
+  geom_hline(aes(yintercept=0), color="gray40") +
+  theme(legend.position = c(0.29,1.02))
 p_Acquisition_Discrim
+#550 x 465 (size of graph - excluding legend)
 
 #analyze the data
 Acquisition_Discrim_model <- anova_test(data = Acquisition_Discrim, dv = Freezing, wid = MouseID, between = c(Age, Sex), within = Day, effect.size = "pes")
@@ -215,7 +219,7 @@ SexBYDay_ph_bonf
 #### ACQUISITION BASELINE ####
 #graph the data
 Acquisition_Baseline <- Acquisition %>% filter(StimType == "Baseline")
-Acquisition_Baseline_Age <- Acquisition_Baseline %>% filter(Age == "Adolescent")
+Acquisition_Baseline_Age <- Acquisition_Baseline %>% filter(Age == "Adult")
 Acquisition_Baseline_Age_stats <- Acquisition_Baseline_Age %>% 
   group_by(Day, Sex) %>% fig_stats
 
@@ -223,14 +227,15 @@ p_Acquisition_Baseline <- ggplot(Acquisition_Baseline_Age_stats, aes(x = Day, y 
   geom_col(position = position_dodge2(width = 0.7)) +
   geom_point(data = Acquisition_Baseline_Age, inherit.aes = FALSE,
              aes(x = Day, y = Freezing, fill = Sex, group = Sex), show.legend = FALSE,
-             position = position_jitterdodge(jitter.width = 0.15, dodge.width = 0.9), alpha = 0.5, shape = 21, stroke = 1, size = 3) +
+             position = position_jitterdodge(jitter.width = 0.15, dodge.width = 0.9), alpha = 0.5, shape = 21, stroke = 0.7, size = 2) +
   geom_errorbar(aes(ymin = mean - sem, ymax = mean + sem),
                 width = 0.1, size = 0.7, position = position_dodge(width = 0.9)) +
   scale_x_discrete(name = NULL, labels = c("Day 1", "Day 2", "Day 3", "Day 4")) +
-  scale_y_continuous("Baseline Freezing (%)", limits = c(0, 100), breaks = seq(0, 100, 10), expand = c(0, 0)) +
+  scale_y_continuous("Baseline Freezing (%)", limits = c(0, 100.5), breaks = seq(0, 100, 10), expand = c(0, 0)) +
   scale_fill_manual(name = NULL, values = c("gray25", "gray60")) +
-  theme(legend.position = c(0.3,1.05))
+  theme(legend.position = c(0.29,1.02))
 p_Acquisition_Baseline
+#550 x 410
 
 #analyze the data
 Acquisition_Baseline_model <- anova_test(data = Acquisition_Baseline, dv = Freezing, wid = MouseID, between = c(Age, Sex), within = Day, effect.size = "pes")
@@ -271,7 +276,7 @@ Summation_Fos <- read_xlsx(sheet = 1, 'Nido_Summation_Fos.xlsx')
 
 #graph the data
 Summation <- Summation_Fos %>% filter(!StimType == "Baseline", !StimType == "Discrim", !StimType == "Inhib", !StimType == "Suppression")
-Summation_Age <- Summation %>% filter(Age == "Adolescent") %>%
+Summation_Age <- Summation %>% filter(Age == "Adult") %>%
   mutate(StimType = fct_relevel(StimType, "Fear", "Compound", "Safety"))
 Summation_sub_stats <- Summation_Age %>%
   mutate(StimType = fct_relevel(StimType, "Fear", "Compound", "Safety")) %>%
@@ -281,14 +286,16 @@ p_Summation <- ggplot(Summation_sub_stats, aes(x = Sex, y = mean, fill = StimTyp
   geom_col(position = position_dodge2(width = 0.7)) +
   geom_point(data = Summation_Age, inherit.aes = FALSE,
              aes(x = Sex, y = Freezing, fill = StimType, group = StimType), show.legend = FALSE,
-             position = position_jitterdodge(jitter.width = 0.15, dodge.width = 0.9), alpha = 0.5, shape = 21, stroke = 1, size = 3) +
+             position = position_jitterdodge(jitter.width = 0.15, dodge.width = 0.9), alpha = 0.5, shape = 21, stroke = 0.7, size = 2) +
   geom_errorbar(aes(ymin = mean - sem, ymax = mean + sem),
                 width = 0.1, size = 0.7, position = position_dodge(width = 0.9)) +
   scale_x_discrete(name = NULL) +
-  scale_y_continuous("Average cued freezing (%)", limits = c(0, 100), breaks = seq(0, 100, 10), expand = c(0, 1)) +
+  scale_y_continuous("Average cued freezing (%)", limits = c(0, 100), breaks = seq(0, 100, 10), expand = c(0, 0)) +
   scale_fill_manual(name = NULL, values = c("red3", "purple3", "steelblue1")) +
-  theme(legend.position = c(1.1,1.05))
+  ggtitle("Adult") +
+  theme(legend.position = c(1,1.05))
 p_Summation
+#550 x 440
 
 #analyze the data
 Summation_Fos_model <- anova_test(data = Summation, dv = Freezing, wid = MouseID, between = c(Age, Sex), within = StimType, effect.size = "pes")
@@ -324,14 +331,15 @@ p_Discrim <- ggplot(Discrim_Age_stats, aes(x = Sex, y = mean, fill = Sex)) +
   geom_col(position = position_dodge2(width = 0.7)) +
   geom_point(data = Discrim_Age, inherit.aes = FALSE,
              aes(x = Sex, y = Freezing, fill = Sex, group = Sex), show.legend = FALSE,
-             position = position_jitterdodge(jitter.width = 0.15, dodge.width = 0.9), alpha = 0.5, shape = 21, stroke = 1, size = 3) +
+             position = position_jitterdodge(jitter.width = 0.15, dodge.width = 0.9), alpha = 0.5, shape = 21, stroke = 0.7, size = 2) +
   geom_errorbar(aes(ymin = mean - sem, ymax = mean + sem),
                 width = 0.1, size = 0.7, position = position_dodge(width = 0.9)) +
   scale_x_discrete(name = NULL, labels = c("Female", "Male")) +
-  scale_y_continuous("Discrimination Index (%)", limits = c(0, 100), breaks = seq(0, 100, 10), expand = c(0, 0)) +
+  scale_y_continuous("Discrimination Index (%)", limits = c(0, 90.3), breaks = seq(0, 90, 10), expand = c(0, 0)) +
   scale_fill_manual(name = NULL, values = c("gray25", "gray60")) +
-  theme(legend.position = c(0.3,1.05))
+  theme(legend.position = "none")
 p_Discrim
+#300 x 400
 
 #analyze the data
 Discrim_model <- anova_test(data = Summation_Discrim, dv = Freezing, wid = MouseID, between = c(Age, Sex), effect.size = "pes")
@@ -348,14 +356,15 @@ p_Supress <- ggplot(Supress_Age_stats, aes(x = Sex, y = mean, fill = Sex)) +
   geom_col(position = position_dodge2(width = 0.7)) +
   geom_point(data = Supress_Age, inherit.aes = FALSE,
              aes(x = Sex, y = Freezing, fill = Sex, group = Sex), show.legend = FALSE,
-             position = position_jitterdodge(jitter.width = 0.15, dodge.width = 0.9), alpha = 0.5, shape = 21, stroke = 1, size = 3) +
+             position = position_jitterdodge(jitter.width = 0.15, dodge.width = 0.9), alpha = 0.5, shape = 21, stroke = 0.7, size = 2) +
   geom_errorbar(aes(ymin = mean - sem, ymax = mean + sem),
                 width = 0.1, size = 0.7, position = position_dodge(width = 0.9)) +
   scale_x_discrete(name = NULL, labels = c("Female", "Male")) +
-  scale_y_continuous("Suppression Ratio", limits = c(0, 1), breaks = seq(0, 1, .1), expand = c(0, 0)) +
+  scale_y_continuous("Suppression Ratio", limits = c(0, 0.602), breaks = seq(0, 0.6, .1), expand = c(0, 0)) +
   scale_fill_manual(name = NULL, values = c("gray25", "gray60")) +
-  theme(legend.position = c(0.3,1.05))
+  theme(legend.position = "none")
 p_Supress
+#300 x 400
 
 #analyze the data
 Supression_model <- anova_test(data = Summation_Supress, dv = Freezing, wid = MouseID, between = c(Age, Sex), effect.size = "pes")
@@ -392,14 +401,16 @@ p_Novelty <- ggplot(Novelty_sub_stats, aes(x = Sex, y = mean, fill = StimType)) 
   geom_col(position = position_dodge2(width = 0.7)) +
   geom_point(data = Novelty_Age, inherit.aes = FALSE,
              aes(x = Sex, y = Freezing, fill = StimType, group = StimType), show.legend = FALSE,
-             position = position_jitterdodge(jitter.width = 0.15, dodge.width = 0.9), alpha = 0.5, shape = 21, stroke = 1, size = 3) +
+             position = position_jitterdodge(jitter.width = 0.15, dodge.width = 0.9), alpha = 0.5, shape = 21, stroke = 0.7, size = 2) +
   geom_errorbar(aes(ymin = mean - sem, ymax = mean + sem),
                 width = 0.1, size = 0.7, position = position_dodge(width = 0.9)) +
   scale_x_discrete(name = NULL) +
-  scale_y_continuous("Average cued freezing (%)", limits = c(0, 100), breaks = seq(0, 100, 10), expand = c(0, 1)) +
+  scale_y_continuous("Average cued freezing (%)", limits = c(0, 100), breaks = seq(0, 100, 10), expand = c(0, 0)) +
   scale_fill_manual(name = NULL, values = c("red3", "purple3", "steelblue1", "turquoise", "orange")) +
-  theme(legend.position = "right")
+  ggtitle("Adolescent") +
+  theme(legend.position = "none")
 p_Novelty
+#550 x 440
 
 #analyze the data
 Novelty_model <- anova_test(data = Novelty, dv = Freezing, wid = MouseID, between = c(Age, Sex), within = StimType, effect.size = "pes")
@@ -414,6 +425,11 @@ Stim_ph_bonf <- p.adjust(Stim_ph$p, method = "bonferroni")
 Stim_ph_bonf
 
 #interaction between Age and StimType
+AgeStimBW_ph <- Novelty %>% group_by(StimType) %>% t_test(Freezing ~ Age, var.equal = FALSE, paired = FALSE)
+AgeStimBW_ph
+AgeStimBW_ph_bonf <- p.adjust(AgeStimBW_ph$p, method = "bonferroni")
+AgeStimBW_ph_bonf
+
 AdolNov <- Novelty %>% filter(Age == "Adolescent")
 levene_test <- leveneTest(Freezing ~ StimType, data = AdolNov) #Levene's test for homogeneity of variances
 levene_test
@@ -449,23 +465,23 @@ Novelty_subsets <- bind_rows(Novelty_midF_highN, Novelty_lowF_highN, Novelty_mid
 Suppression <- Novelty_subsets %>% filter(StimType == "Suppression")
 Suppression_Age <- Suppression %>% filter(Age == "Adult")
 Suppression_Age_stats <- Suppression_Age %>%
-  group_by(Group, Sex) %>%
-  fig_stats
+  group_by(Group, Sex) %>% fig_stats
   
 p_Suppression <- ggplot(Suppression_Age_stats, aes(x = Sex, y = mean, fill = Group)) +
   geom_col(position = position_dodge2(width = 0.7)) +
   geom_point(data = Suppression_Age, inherit.aes = FALSE,
              aes(x = Sex, y = Freezing, fill = Group, group = Group), show.legend = FALSE,
-             position = position_jitterdodge(jitter.width = 0.15, dodge.width = 0.9), alpha = 0.5, shape = 21, stroke = 1, size = 3) +
+             position = position_jitterdodge(jitter.width = 0.15, dodge.width = 0.9), alpha = 0.5, shape = 21, stroke = 0.7, size = 2) +
   geom_errorbar(aes(ymin = mean - sem, ymax = mean + sem),
                 width = 0.1, size = 0.7, position = position_dodge(width = 0.9)) +
   scale_x_discrete(name = NULL) +
-  scale_y_continuous("Suppression ratio", limits = c(0, 1.02), breaks = seq(0, 1.02, 0.25), expand = c(0, 0)) +
+  scale_y_continuous("Suppression ratio", limits = c(0, 1.01), breaks = seq(0, 1, 0.2), expand = c(0, 0)) +
   scale_fill_manual(name = NULL, values = c("palevioletred3", "lightpink2", "mistyrose"),
                     labels = c("Low Fear, Mid Safety, High Novelty", "Low Safety, Mid Fear, High Novelty", "Intermediate Novelty")) +
+  geom_hline(aes(yintercept=0.5), color="gray40", linetype = "dashed") +
   theme(legend.position = "none")
 p_Suppression
-# 470 X 550
+# 400 X 320
 
 #analyze the data
 Suppression_model <- anova_test(data = Suppression, dv = Freezing, wid = MouseID, between = c(Age, Group, Sex), effect.size = "pes")
@@ -481,7 +497,7 @@ Group_ph_bonf
 
 #Generalization
 Generalization <- Novelty_subsets %>% filter(StimType == "Generalization")
-Generalization_Age <- Generalization %>% filter(Age == "Adolescent")
+Generalization_Age <- Generalization %>% filter(Age == "Adult")
 Generalization_Age_stats <- Generalization_Age %>%
   group_by(Group, Sex) %>%
   fig_stats
@@ -490,15 +506,17 @@ p_Generalization <- ggplot(Generalization_Age_stats, aes(x = Sex, y = mean, fill
   geom_col(position = position_dodge2(width = 0.7)) +
   geom_point(data = Generalization_Age, inherit.aes = FALSE,
              aes(x = Sex, y = Freezing, fill = Group, group = Group), show.legend = FALSE,
-             position = position_jitterdodge(jitter.width = 0.15, dodge.width = 0.9), alpha = 0.5, shape = 21, stroke = 1, size = 3) +
+             position = position_jitterdodge(jitter.width = 0.15, dodge.width = 0.9), alpha = 0.5, shape = 21, stroke = 0.7, size = 2) +
   geom_errorbar(aes(ymin = mean - sem, ymax = mean + sem),
                 width = 0.1, size = 0.7, position = position_dodge(width = 0.9)) +
   scale_x_discrete(name = NULL) +
-  scale_y_continuous("Generalization ratio", limits = c(0, 1), breaks = seq(0, 1, 0.2), expand = c(0, 0)) +
+  scale_y_continuous("Generalization ratio", limits = c(0, 1.01), breaks = seq(0, 1, 0.2), expand = c(0, 0)) +
   scale_fill_manual(name = NULL, values = c("palevioletred3", "lightpink2", "mistyrose"),
                     labels = c("Low Fear, Mid Safety, High Novelty", "Low Safety, Mid Fear, High Novelty", "Intermediate Novelty")) +
+  geom_hline(aes(yintercept=0.5), color="gray40", linetype = "dashed") +
   theme(legend.position = "none")
 p_Generalization
+# 400 X 320
 
 #analyze the data
 Generalization_model <- anova_test(data = Generalization, dv = Freezing, wid = MouseID, between = c(Age, Group, Sex), effect.size = "pes")
@@ -506,7 +524,7 @@ Generalization_model
 
 #Novelty
 NovelCue <- Novelty_subsets %>% filter(StimType == "Novel")
-NovelCue_Age <- NovelCue %>% filter(Age == "Adolescent")
+NovelCue_Age <- NovelCue %>% filter(Age == "Adult")
 NovelCue_Age_stats <- NovelCue_Age %>%
   group_by(Group, Sex) %>%
   fig_stats
@@ -515,15 +533,16 @@ p_NovelCue <- ggplot(NovelCue_Age_stats, aes(x = Sex, y = mean, fill = Group)) +
   geom_col(position = position_dodge2(width = 0.7)) +
   geom_point(data = NovelCue_Age, inherit.aes = FALSE,
              aes(x = Sex, y = Freezing, fill = Group, group = Group), show.legend = FALSE,
-             position = position_jitterdodge(jitter.width = 0.15, dodge.width = 0.9), alpha = 0.5, shape = 21, stroke = 1, size = 3) +
+             position = position_jitterdodge(jitter.width = 0.15, dodge.width = 0.9), alpha = 0.5, shape = 21, stroke = 0.7, size = 2) +
   geom_errorbar(aes(ymin = mean - sem, ymax = mean + sem),
                 width = 0.1, size = 0.7, position = position_dodge(width = 0.9)) +
   scale_x_discrete(name = NULL) +
-  scale_y_continuous("Novelty Freezing (%)", limits = c(0, 100), breaks = seq(0, 100, 10), expand = c(0, 0)) +
+  scale_y_continuous("Novelty Freezing (%)", limits = c(0, 100.5), breaks = seq(0, 100, 20), expand = c(0, 0)) +
   scale_fill_manual(name = NULL, values = c("palevioletred3", "lightpink2", "mistyrose"),
                     labels = c("Low Fear, Mid Safety, High Novelty", "Low Safety, Mid Fear, High Novelty", "Intermediate Novelty")) +
   theme(legend.position = "none")
 p_NovelCue
+# 400 X 320
 
 #analyze the data
 NovelCue_model <- anova_test(data = NovelCue, dv = Freezing, wid = MouseID, between = c(Age, Group, Sex), effect.size = "pes")
@@ -572,3 +591,6 @@ p_SuppGen <- ggplot(SuppGen_Age_stats, aes(x = Group, y = mean, fill = StimType)
   #scale_fill_manual(name = NULL, values = c("red3", "purple3", "steelblue1", "turquoise", "orange")) +
   theme(legend.position = c(0.3,1))
 p_SuppGen
+#
+
+#### Correlating DC with later inhibition ####
