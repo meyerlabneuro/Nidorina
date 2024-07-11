@@ -169,6 +169,7 @@ p_AMY
 #### Analyze by performance ####
 #https://cran.r-project.org/web/packages/corrplot/vignettes/corrplot-intro.html
 library('corrplot') #package corrplot
+library('RColorBrewer')
 Summation <- read_xlsx('Nido_Summation_Fos.xlsx') %>% 
   filter(!StimType == "Baseline", !StimType == "Inhib") %>% 
   rename(Value = Freezing) %>% rename(Variable = StimType)
@@ -289,9 +290,114 @@ Retrosplenial <- Retrosplenial %>% mutate(Region = "RSC")
 VentralHipp <- VentralHipp %>% mutate(Region = "VH")
 Amygdala <- Amygdala %>% mutate(Region = "BLA")
 AllBrain <- bind_rows(Prelimbic, Infralimbic, Orbitofrontal, Retrosplenial, VentralHipp, Amygdala)
-AllBrain <- AllBrain %>% rename(Value = Ratio)
-#fix from here
-AllBrain_performance <- bind_rows(AllBrain, Summation)
-AllBrain_performance_wide <- AllBrain_performance %>% pivot_wider(names_from = Variable, values_from = Value) #%>%
-select(MouseID:Age, Ratio, Fear, Compound, Safety, Discrim, Suppression) %>%
-  filter(!is.na(Ratio))
+AllBrain <- AllBrain %>% rename(Ratio = Value)
+AllBrain <- AllBrain %>% select(-Variable) #get rid of column that just says "Ratio" over and over 
+
+#fix from here (gabby tries to fix below)
+Summation <- Summation %>% rename( #renaming summation's variable and value since AllBrain also has value and variable columns
+  SummationVariable = Variable,
+  SummationValue = Value)
+
+AllBrain_performance <- AllBrain %>%
+  left_join(Summation, by = c("MouseID", "Age", "Sex"), #if MouseID, Age, Sex match between data from Summation and AllBrain, 
+            #add corresponding SummationValue and SummationVariable to appropriate AllBrain row
+            relationship = "many-to-many") #this means we expect a ton of different combinations of brain regions and stimtypes
+AllBrain_performance_wide <- AllBrain_performance %>% pivot_wider(names_from = SummationVariable, values_from = SummationValue) %>%
+select(MouseID, Sex, Age, Ratio, Region, Fear, Compound, Safety, Discrim, Suppression) %>%
+  filter(!is.na(Ratio)) #make it wide, drop Na values
+
+#what if i just
+AllBrain_corr_build <- data.frame(Ratio=AllBrain_performance_wide$Ratio,
+                             Fear=AllBrain_performance_wide$Fear,
+                             Compound=AllBrain_performance_wide$Compound,
+                             Safety=AllBrain_performance_wide$Safety,
+                             Discrim=AllBrain_performance_wide$Discrim,
+                             Suppression=AllBrain_performance_wide$Suppression)
+AllBrain_corr <- cor(AllBrain_corr_build) # get correlations
+
+# Open a new plotting window since this is BIG graph
+plot.new()
+dev.off()
+
+#Make pretty matrix table for All Brain
+corrplot(AllBrain_corr, method = "color", tl.col = 'black', addCoef.col ='black', number.cex = 0.8, col = brewer.pal(n = 9, name = "YlGn"), 
+         title = "Correlation Matrix of AllBrain Performance Measures",
+         mar = c(0,0,1,0)) #plot matrix
+cor.mtest(AllBrain_corr) #returns p-values in a table
+
+#P-Values 
+#function to compute p-values (since not used in the corrplot directly)
+cor.mtest <- function(mat, conf.level = 0.95) {
+  mat <- as.matrix(mat)
+  n <- ncol(mat)
+  p.mat <- matrix(NA, n, n)
+  diag(p.mat) <- 0
+  for (i in 1:(n - 1)) {
+    for (j in (i + 1):n) {
+      tmp <- cor.test(mat[, i], mat[, j], conf.level = conf.level)
+      p.mat[i, j] <- p.mat[j, i] <- tmp$p.value
+    }
+  }
+  colnames(p.mat) <- rownames(p.mat) <- colnames(mat)
+  p.mat
+}
+#function to add asterisks to significant p-values when p-values printed
+format_p_values <- function(p.mat, alpha = c(0.001, 0.01, 0.05)) {
+  formatted_p.mat <- matrix("", nrow = nrow(p.mat), ncol = ncol(p.mat))
+  rownames(formatted_p.mat) <- rownames(p.mat)
+  colnames(formatted_p.mat) <- colnames(p.mat)
+  
+  for (i in 1:nrow(p.mat)) {
+    for (j in 1:ncol(p.mat)) {
+      if (p.mat[i, j] < alpha[1]) {
+        formatted_p.mat[i, j] <- "***"
+      } else if (p.mat[i, j] < alpha[2]) {
+        formatted_p.mat[i, j] <- "**"
+      } else if (p.mat[i, j] < alpha[3]) {
+        formatted_p.mat[i, j] <- "*"
+      } else {
+        formatted_p.mat[i, j] <- ""
+      }
+    }
+  }
+  formatted_p.mat
+}
+
+# region Get p-values -----------------------------------------------------
+AllBrain_pvalues <- cor.mtest(AllBrain_corr)
+print(AllBrain_pvalues)
+AllBrain_pvalues_stars <- format_p_values(AllBrain_pvalues)
+print(AllBrain_pvalues_stars)
+
+PL_pvalues <- cor.mtest(PL_corr)
+print(PL_pvalues)
+PL_pvalues_stars <- format_p_values(PL_pvalues)
+print(PL_pvalues_stars)
+
+IL_pvalues <- cor.mtest(IL_corr)
+print(IL_pvalues)
+IL_pvalues_stars <- format_p_values(IL_pvalues)
+print(IL_pvalues_stars)
+
+OFC_pvalues <- cor.mtest(OFC_corr)
+print(OFC_pvalues)
+OFC_pvalues_stars <- format_p_values(OFC_pvalues)
+print(OFC_pvalues_stars)
+
+RSC_pvalues <- cor.mtest(RSC_corr)
+print(RSC_pvalues)
+RSC_pvalues_stars <- format_p_values(RSC_pvalues)
+print(RSC_pvalues_stars)
+
+VH_pvalues <- cor.mtest(VH_corr)
+print(VH_pvalues)
+VH_pvalues_stars <- format_p_values(VH_pvalues)
+print(VH_pvalues_stars)
+
+BLA_pvalues <- cor.mtest(BLA_corr)
+print(BLA_pvalues)
+BLA_pvalues_stars <- format_p_values(BLA_pvalues)
+print(BLA_pvalues_stars)
+# endregion
+
+yah 
