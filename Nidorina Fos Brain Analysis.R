@@ -1,5 +1,11 @@
 #setwd('/Users/hcmeyer/Meyer Lab Boston University/Research/Experiments/Nidorina')
-library(readxl); library(forcats); library(ggsci); library(patchwork); library(ez); library(rstatix); library(multcomp); library(tidyverse); library(cowplot); library(car)
+#install,packages("conflicted")
+#install.packages("dplyr")
+library(conflicted); library(dplyr); library(readxl); library(forcats); library(ggsci); library(patchwork); library(ez); library(rstatix); library(multcomp); library(tidyverse); library(cowplot); library(car)
+
+# Set dplyr::select as the preferred function in case of conflict
+conflict_prefer("select", "dplyr")
+conflict_prefer("filter", "dplyr")
 
 brain_stats <- function(x) 
 {x %>% summarize(mean = mean(Ratio),
@@ -292,6 +298,7 @@ Amygdala <- Amygdala %>% mutate(Region = "BLA")
 AllBrain <- bind_rows(Prelimbic, Infralimbic, Orbitofrontal, Retrosplenial, VentralHipp, Amygdala)
 AllBrain <- AllBrain %>% rename(Ratio = Value)
 AllBrain <- AllBrain %>% select(-Variable) #get rid of column that just says "Ratio" over and over 
+#AllBrain <- AllBrain %>% dplyr::select(-Variable) #just in case the above line ever errors out 
 
 #fix from here (gabby tries to fix below)
 Summation <- Summation %>% rename( #renaming summation's variable and value since AllBrain also has value and variable columns
@@ -302,11 +309,12 @@ AllBrain_performance <- AllBrain %>%
   left_join(Summation, by = c("MouseID", "Age", "Sex"), #if MouseID, Age, Sex match between data from Summation and AllBrain, 
             #add corresponding SummationValue and SummationVariable to appropriate AllBrain row
             relationship = "many-to-many") #this means we expect a ton of different combinations of brain regions and stimtypes
+
 AllBrain_performance_wide <- AllBrain_performance %>% pivot_wider(names_from = SummationVariable, values_from = SummationValue) %>%
 select(MouseID, Sex, Age, Ratio, Region, Fear, Compound, Safety, Discrim, Suppression) %>%
   filter(!is.na(Ratio)) #make it wide, drop Na values
 
-#what if i just
+#make all brain correlation
 AllBrain_corr_build <- data.frame(Ratio=AllBrain_performance_wide$Ratio,
                              Fear=AllBrain_performance_wide$Fear,
                              Compound=AllBrain_performance_wide$Compound,
@@ -363,7 +371,7 @@ format_p_values <- function(p.mat, alpha = c(0.001, 0.01, 0.05)) {
   formatted_p.mat
 }
 
-# region Get p-values -----------------------------------------------------
+# region correlation Get p-values -----------------------------------------------------
 AllBrain_pvalues <- cor.mtest(AllBrain_corr)
 print(AllBrain_pvalues)
 AllBrain_pvalues_stars <- format_p_values(AllBrain_pvalues)
@@ -400,4 +408,62 @@ BLA_pvalues_stars <- format_p_values(BLA_pvalues)
 print(BLA_pvalues_stars)
 # endregion
 
-yah 
+# PCA for All Brain
+library(ggplot2); library(factoextra)
+
+#ensuring the quantitative columns are numeric
+AllBrain_performance_wide <- AllBrain_performance_wide %>%
+  mutate(across(c(Ratio, Fear, Compound, Safety, Discrim, Suppression), as.numeric))
+
+#select data for PCA
+pca_data <- AllBrain_performance_wide %>%
+ select(Ratio, Fear, Compound, Safety, Discrim, Suppression)
+
+pca_result <- prcomp(pca_data, center = TRUE, scale. = TRUE)
+summary(pca_result)
+
+#scree plot -> this gives a bar graph with the percentage of variance explained by our 6 dimensions
+fviz_eig(pca_result, addlabels = TRUE, ylim = c(0, 50))
+  #according to the rule of proportion of variance - selected PCs should be able to explain at least 80% of variance, 
+  #so we can take PC 1, 2, 3 and ignore 4, 5, and 6 and not lose any information! 
+
+#make pca loading plot
+loadings <- as.data.frame(pca_result$rotation)
+
+loading_plot <- ggplot(loadings, aes(x = PC1, y = PC2, label = rownames(loadings))) +
+  geom_point(color = "blue", size = 3) +
+  geom_text(vjust = -0.3, hjust = -0.1, size = 3) +
+  geom_segment(aes(x = 0, y = 0, xend = PC1, yend = PC2), arrow = arrow(length = unit(0.2, "cm")), color = "cornflowerblue") +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray") +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "gray") +
+  labs(title = "PCA Loading Plot",
+       x = "Principal Component 1",
+       y = "Principal Component 2") +
+  theme_minimal()
+print(loading_plot)
+  #ratio appears to negatively correlated with discrim
+  #ratio is not very likely to be correlated with fear, compound, or suppression
+  #there is likely a positive correlation between ratio and safety
+
+#biplot - merge loading plot and simple PCA plot
+fviz_pca_biplot(pca_result, geom = "point", label = "var")
+  #each point is a sample from our dataset
+  #fear compound suppression leaning towards dim2
+  #ratio leaning towards dim1
+
+#color by Sex 
+fviz_pca_biplot(pca_result, geom.ind = "point", pointshape = 21, 
+                col.ind = AllBrain_performance_wide$Sex, 
+                palette = c("#00AFBB", "#E7B800"),
+                addEllipses = TRUE, label = "var")
+  #dim 2 contributes more variance to females than males (fear compound suppression discrimin)
+  #dim 1 contributes more variance in males than females (safety, ratio)
+  #there is still a big overlap but cool how females have more variance explained in more variables than males 
+
+#color by Age
+fviz_pca_biplot(pca_result, geom.ind = "point", pointshape = 21, 
+                col.ind = AllBrain_performance_wide$Age, 
+                palette = c("#00AFBB", "#E7B800"),
+                addEllipses = TRUE, label = "var")
+  #dim 1 contributes more variance to adolescents than adults (more variance in safety data)
+  #adult variances are explained among everything BUT safety 
