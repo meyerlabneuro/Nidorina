@@ -1,8 +1,6 @@
-
 ###figure out how to wade through novelty results -- start with graph of raw freezing from ALL novelty mice
 #then consider only suppression, generalization, and novel cue freezing for subsets
-
-setwd('/Users/hcmeyer/Meyer Lab Boston University/Research/Experiments/Nidorina')
+setwd('C:/Users/Gabrielle/Documents/GitHub/aac_pilot/Nidorina')
 library(readxl); library(writexl);library(ggplot2); library(forcats); library(ggsci); library(patchwork); library(ez); library(rstatix); library(multcomp); library(tidyverse); library(cowplot); library(car)
 
 fig_stats <- function(x) 
