@@ -163,7 +163,7 @@ p_AMY <- ggplot(AMY_stats, aes(x = Age, y = mean, fill = Sex)) +
   geom_col(position = position_dodge2(width = 0.7)) +
   geom_point(data = Amygdala, inherit.aes = FALSE,
              aes(x = Age, y = Ratio, fill = Sex, group = Sex), show.legend = FALSE,
-             position = positiopn_jitterdodge(jitter.width = 0.15, dodge.width = 0.9), alpha = 0.5, shape = 21, stroke = 0.7, size = 2) +
+             position = position_jitterdodge(jitter.width = 0.15, dodge.width = 0.9), alpha = 0.5, shape = 21, stroke = 0.7, size = 2) +
   geom_errorbar(aes(ymin = mean - sem, ymax = mean + sem), width = 0.1, linewidth = 0.7, position = position_dodge(width = 0.9)) +
   scale_x_discrete(name = NULL) +
   scale_y_continuous("Fos/DAPI (%)", limits = c(0, 50), breaks = seq(0, 50, 10), expand = c(0, 0)) +
