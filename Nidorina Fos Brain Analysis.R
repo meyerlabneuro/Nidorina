@@ -1,7 +1,7 @@
 #setwd('/Users/hcmeyer/Meyer Lab Boston University/Research/Experiments/Nidorina')
 #install,packages("conflicted")
 #install.packages("dplyr")
-library(conflicted); library(dplyr); library(readxl); library(forcats); library(ggsci); library(patchwork); library(ez); library(rstatix); library(multcomp); library(tidyverse); library(cowplot); library(car)
+library(conflicted); library(dplyr); library(readxl);library(writexl); library(forcats); library(ggsci); library(patchwork); library(ez); library(rstatix); library(multcomp); library(tidyverse); library(cowplot); library(car)
 
 # Set dplyr::select as the preferred function in case of conflict
 conflict_prefer("select", "dplyr")
@@ -186,6 +186,7 @@ Prelimbic <- Prelimbic %>% rename(Value = Ratio)
 PL_performance <- bind_rows(Prelimbic, Summation)
 PL_performance_wide <- PL_performance %>% pivot_wider(names_from = Variable, values_from = Value) %>%
   filter(!is.na(Ratio))
+#write_xlsx(PL_performance_wide, 'pl_corr.xlsx')
 
 PL_corr_build <- data.frame(Ratio=PL_performance_wide$Ratio,
                             Fear=PL_performance_wide$Fear,
@@ -204,6 +205,7 @@ Infralimbic <- Infralimbic %>% rename(Value = Ratio)
 IL_performance <- bind_rows(Infralimbic, Summation)
 IL_performance_wide <- IL_performance %>% pivot_wider(names_from = Variable, values_from = Value) %>%
   filter(!is.na(Ratio))
+write_xlsx(IL_performance_wide, 'il_corr.xlsx')
 
 IL_corr_build <- data.frame(Ratio=IL_performance_wide$Ratio,
                             Fear=IL_performance_wide$Fear,
@@ -222,6 +224,8 @@ Orbitofrontal <- Orbitofrontal %>% rename(Value = Ratio)
 OFC_performance <- bind_rows(Orbitofrontal, Summation)
 OFC_performance_wide <- OFC_performance %>% pivot_wider(names_from = Variable, values_from = Value) %>%
   filter(!is.na(Ratio))
+write_xlsx(OFC_performance_wide, 'ofc_corr.xlsx')
+
 
 OFC_corr_build <- data.frame(Ratio=OFC_performance_wide$Ratio,
                              Fear=OFC_performance_wide$Fear,
@@ -240,6 +244,7 @@ Retrosplenial <- Retrosplenial %>% rename(Value = Ratio)
 RSC_performance <- bind_rows(Retrosplenial, Summation)
 RSC_performance_wide <- RSC_performance %>% pivot_wider(names_from = Variable, values_from = Value) %>%
   filter(!is.na(Ratio))
+write_xlsx(RSC_performance_wide, 'rsc_corr.xlsx')
 
 RSC_corr_build <- data.frame(Ratio=RSC_performance_wide$Ratio,
                             Fear=RSC_performance_wide$Fear,
@@ -258,6 +263,7 @@ VentralHipp <- VentralHipp %>% rename(Value = Ratio)
 VH_performance <- bind_rows(VentralHipp, Summation)
 VH_performance_wide <- VH_performance %>% pivot_wider(names_from = Variable, values_from = Value) %>%
   filter(!is.na(Ratio))
+write_xlsx(VH_performance_wide, 'vh_corr.xlsx')
 
 VH_corr_build <- data.frame(Ratio=VH_performance_wide$Ratio,
                             Fear=VH_performance_wide$Fear,
@@ -276,6 +282,7 @@ Amygdala <- Amygdala %>% rename(Value = Ratio)
 BLA_performance <- bind_rows(Amygdala, Summation)
 BLA_performance_wide <- BLA_performance %>% pivot_wider(names_from = Variable, values_from = Value) %>%
   filter(!is.na(Ratio))
+write_xlsx(BLA_performance_wide, 'bla_corr.xlsx')
 
 BLA_corr_build <- data.frame(Ratio=BLA_performance_wide$Ratio,
                 Fear=BLA_performance_wide$Fear,
