@@ -1,0 +1,1 @@
+Data files used for data analysis and figure creation in Age and Sex Independently Influence Safety Learning in Mice, published 5 June 2025 in Behavioural Brain Research (Volume 487 - 115594) https://doi.org/10.1016/j.bbr.2025.115594.
